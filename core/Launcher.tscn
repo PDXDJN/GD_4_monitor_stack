@@ -1,0 +1,22 @@
+[gd_scene load_steps=5 format=3 uid="uid://launcher_main"]
+
+[ext_resource type="Script" path="res://core/Launcher.gd" id="1_launcher"]
+[ext_resource type="Script" path="res://core/Transitions.gd" id="2_transitions"]
+[ext_resource type="Script" path="res://core/Scheduler.gd" id="3_scheduler"]
+[ext_resource type="PackedScene" path="res://ui/DebugOverlay.tscn" id="4_debug"]
+
+[node name="Launcher" type="Node"]
+script = ExtResource("1_launcher")
+
+[node name="SceneRoot" type="Node" parent="."]
+
+[node name="TransitionLayer" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="Transitions" type="Node" parent="TransitionLayer"]
+script = ExtResource("2_transitions")
+
+[node name="Scheduler" type="Node" parent="."]
+script = ExtResource("3_scheduler")
+
+[node name="DebugOverlay" parent="." instance=ExtResource("4_debug")]

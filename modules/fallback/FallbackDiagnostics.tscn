@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://fallback_diagnostics"]
+
+[ext_resource type="Script" path="res://modules/fallback/FallbackDiagnostics.gd" id="1_script"]
+
+[node name="FallbackDiagnostics" type="Node2D"]
+script = ExtResource("1_script")

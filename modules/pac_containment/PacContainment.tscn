@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://pac_containment"]
+
+[ext_resource type="Script" path="res://modules/pac_containment/PacContainment.gd" id="1_script"]
+
+[node name="PacContainment" type="Node2D"]
+script = ExtResource("1_script")

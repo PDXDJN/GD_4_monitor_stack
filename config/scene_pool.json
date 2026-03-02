@@ -1,0 +1,10 @@
+{
+  "pool": [
+    {"id": "orbital_overview",  "weight": 1.0},
+    {"id": "data_cascade",      "weight": 1.0},
+    {"id": "pac_containment",   "weight": 1.0},
+    {"id": "core_diagnostics",  "weight": 0.6},
+    {"id": "berlin_icons",      "weight": 1.0}
+  ],
+  "no_repeat_window": 2
+}

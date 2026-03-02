@@ -1,0 +1,29 @@
+{
+  "id": "core_diagnostics",
+  "title": "Core Diagnostics",
+  "scene": "res://modules/core_diagnostics/CoreDiagnostics.tscn",
+  "tags": ["diagnostic", "calibration", "utility"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 25,
+    "max_sec": 45,
+    "allow_early_exit": true
+  },
+  "sequence": [
+    { "t": 0.0,  "op": "call", "method": "set_mode", "args": ["grid"] },
+    { "t": 5.0,  "op": "call", "method": "set_mode", "args": ["labels"] },
+    { "t": 12.0, "op": "call", "method": "set_mode", "args": ["edge_walk"] }
+  ],
+  "transition": {
+    "in": "fade_black",
+    "out": "fade_black",
+    "in_duration": 0.8,
+    "out_duration": 0.8
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 0.6
+}

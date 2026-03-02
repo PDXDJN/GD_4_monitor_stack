@@ -1,0 +1,23 @@
+{
+  "id": "orbital_overview",
+  "title": "Orbital Overview",
+  "scene": "res://modules/orbital_overview/OrbitalOverview.tscn",
+  "tags": ["vector", "wireframe", "slow", "space"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 60,
+    "max_sec": 120
+  },
+  "transition": {
+    "in": "fade_black",
+    "out": "scanline_wipe",
+    "in_duration": 1.5,
+    "out_duration": 1.2
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 1.0
+}

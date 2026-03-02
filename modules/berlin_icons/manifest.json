@@ -1,0 +1,23 @@
+{
+  "id": "berlin_icons",
+  "title": "Berlin Icon Scroll",
+  "scene": "res://modules/berlin_icons/BerlinIconsScroll.tscn",
+  "tags": ["scroll", "icons", "vector", "berlin", "retro"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 45,
+    "max_sec": 120
+  },
+  "transition": {
+    "in": "fade_black",
+    "out": "scanline_wipe",
+    "in_duration": 1.0,
+    "out_duration": 1.0
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 1.0
+}

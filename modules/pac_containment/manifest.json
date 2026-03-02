@@ -1,0 +1,24 @@
+{
+  "id": "pac_containment",
+  "title": "Particle Containment",
+  "scene": "res://modules/pac_containment/PacContainment.tscn",
+  "tags": ["status", "containment", "warning", "activity"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 45,
+    "max_sec": 90,
+    "allow_early_exit": true
+  },
+  "transition": {
+    "in": "fade_black",
+    "out": "scanline_wipe",
+    "in_duration": 1.2,
+    "out_duration": 1.0
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 1.0
+}

@@ -1,0 +1,23 @@
+{
+  "id": "data_cascade",
+  "title": "Data Cascade",
+  "scene": "res://modules/data_cascade/DataCascade.tscn",
+  "tags": ["matrix", "glyphs", "vertical", "digital"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 45,
+    "max_sec": 90
+  },
+  "transition": {
+    "in": "fade_black",
+    "out": "fade_black",
+    "in_duration": 1.0,
+    "out_duration": 1.0
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 1.0
+}
