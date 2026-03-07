@@ -44,6 +44,20 @@ var _wind_down_timer: float = 0.0
 var _wind_down_dur: float = 2.0
 var _winding_down := false
 
+# SVG globe sprite — black strokes recoloured to phosphor green via inline shader
+const GLOBE_SHADER_SRC := """
+shader_type canvas_item;
+uniform vec4 tint_color : source_color = vec4(0.0, 0.85, 0.45, 0.85);
+void fragment() {
+    vec4 tex = texture(TEXTURE, UV);
+    float blackness = 1.0 - max(max(tex.r, tex.g), tex.b);
+    COLOR = vec4(tint_color.rgb, tex.a * blackness * tint_color.a);
+}
+"""
+var _globe_tex    : Texture2D = null
+var _globe_shader : Shader    = null
+var _globe_sprite : Sprite2D  = null
+
 func module_configure(ctx: Dictionary) -> void:
 	_manifest = ctx["manifest"]
 	module_rng = RNG.make_rng(ctx["seed"])
@@ -68,17 +82,55 @@ func module_start() -> void:
 	_radar_angle = module_rng.randf_range(0.0, TAU)
 	_rotation_y = module_rng.randf_range(0.0, TAU)
 
+	# Load SVG wireframe earth and attach as a Sprite2D child (z_index=-1 so
+	# _draw() overlays — radar ring, crosshairs, brackets — appear on top).
+	_free_globe_sprite()
+	_globe_tex = null
+	var svg := "res://assets/images/Wireframe-Earth-Globe.svg"
+	if ResourceLoader.exists(svg):
+		var res := load(svg)
+		if res is Texture2D:
+			_globe_tex = res as Texture2D
+		else:
+			Log.warn("OrbitalOverview: SVG is not Texture2D: " + svg)
+	else:
+		Log.warn("OrbitalOverview: SVG not found — using procedural wireframe")
+
+	if _globe_tex:
+		if _globe_shader == null:
+			_globe_shader = Shader.new()
+			_globe_shader.code = GLOBE_SHADER_SRC
+		var tex_sz   := float(maxi(_globe_tex.get_width(), _globe_tex.get_height()))
+		var globe_px := _sphere_radius * 2.0
+		_globe_sprite          = Sprite2D.new()
+		_globe_sprite.texture  = _globe_tex
+		_globe_sprite.position = _center
+		_globe_sprite.scale    = Vector2.ONE * globe_px / tex_sz
+		_globe_sprite.rotation = _rotation_y
+		_globe_sprite.z_index  = -1
+		_globe_sprite.z_as_relative = true
+		var mat := ShaderMaterial.new()
+		mat.shader = _globe_shader
+		mat.set_shader_parameter("tint_color",
+				Color(COLOR_EQUATOR.r, COLOR_EQUATOR.g, COLOR_EQUATOR.b, 0.85))
+		_globe_sprite.material = mat
+		add_child(_globe_sprite)
+
 func _process(delta: float) -> void:
 	if not module_started_at > 0.0:
 		return
+
+	_rotation_y  += _rotation_speed * delta
+	_radar_angle += _radar_speed * delta
+
+	if is_instance_valid(_globe_sprite):
+		_globe_sprite.rotation = _rotation_y
 
 	if _winding_down:
 		_wind_down_timer += delta
 		if _wind_down_timer >= _wind_down_dur:
 			_finished = true
 
-	_rotation_y += _rotation_speed * delta
-	_radar_angle += _radar_speed * delta
 	queue_redraw()
 
 func _draw() -> void:
@@ -89,8 +141,14 @@ func _draw() -> void:
 	if _winding_down:
 		alpha_scale = clampf(1.0 - _wind_down_timer / _wind_down_dur, 0.0, 1.0)
 
+	# Fade the globe sprite to match wind-down alpha
+	if is_instance_valid(_globe_sprite):
+		_globe_sprite.modulate.a = alpha_scale
+
 	_draw_grid_background(alpha_scale)
-	_draw_sphere_wireframe(alpha_scale)
+	# Procedural wireframe only when SVG sprite is not available
+	if not is_instance_valid(_globe_sprite):
+		_draw_sphere_wireframe(alpha_scale)
 	_draw_radar_circle(alpha_scale)
 	_draw_crosshairs(alpha_scale)
 	_draw_corner_brackets(alpha_scale)
@@ -223,10 +281,17 @@ func module_request_stop(reason: String) -> void:
 	_stop_requested = true
 	_winding_down = true
 	_wind_down_timer = 0.0
-	Logger.debug("OrbitalOverview: stop requested", {"reason": reason})
+	Log.debug("OrbitalOverview: stop requested", {"reason": reason})
 
 func module_is_finished() -> bool:
 	return _finished
 
 func module_shutdown() -> void:
-	pass
+	_free_globe_sprite()
+	_globe_tex    = null
+	_globe_shader = null
+
+func _free_globe_sprite() -> void:
+	if is_instance_valid(_globe_sprite):
+		_globe_sprite.queue_free()
+	_globe_sprite = null

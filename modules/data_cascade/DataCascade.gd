@@ -26,8 +26,18 @@ const UPDATE_INTERVAL := 0.06 # seconds between character scramble (~15 fps for 
 var _columns: Array[Dictionary] = []   # per-column state
 var _char_timer := 0.0
 
-# Character set (ASCII art / katakana-ish mix using available chars)
-const CHARSET := "0123456789ABCDEF!@#$%^&*<>?|/\\[]{}+=~`ZYXWVUTSRQPONMLKJI"
+# Character set — Japanese katakana + Korean hangul syllables
+const CHARSET: Array[String] = [
+	"ア","イ","ウ","エ","オ","カ","キ","ク","ケ","コ",
+	"サ","シ","ス","セ","ソ","タ","チ","ツ","テ","ト",
+	"ナ","ニ","ヌ","ネ","ノ","ハ","ヒ","フ","ヘ","ホ",
+	"マ","ミ","ム","メ","モ","ヤ","ユ","ヨ","ラ","リ",
+	"ル","レ","ロ","ワ","ヲ","ン","ヴ","ガ","ギ","グ",
+	"가","나","다","라","마","바","사","아","자","차",
+	"카","타","파","하","고","노","도","로","모","보",
+	"소","오","조","초","코","토","포","호","구","누",
+	"두","루","무","부","수","우","주","추","쿠","투",
+]
 
 # Real viewport dimensions
 var _vp_w: int = 1024
@@ -87,7 +97,7 @@ func _make_column(col_index: int, randomize_start: bool) -> Dictionary:
 	}
 
 func _random_char() -> String:
-	return CHARSET[module_rng.randi() % CHARSET.length()]
+	return CHARSET[module_rng.randi() % CHARSET.size()]
 
 func _process(delta: float) -> void:
 	if not module_started_at > 0.0:
@@ -187,7 +197,7 @@ func module_request_stop(reason: String) -> void:
 	_stop_requested = true
 	_winding_down = true
 	_wind_down_timer = 0.0
-	Logger.debug("DataCascade: stop requested", {"reason": reason})
+	Log.debug("DataCascade: stop requested", {"reason": reason})
 
 func module_is_finished() -> bool:
 	return _finished

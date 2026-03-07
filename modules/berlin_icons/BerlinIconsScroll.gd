@@ -90,7 +90,7 @@ func module_status() -> Dictionary:
 func module_request_stop(reason: String) -> void:
 	_stop_requested = true
 	_winding_down   = true
-	Logger.debug("BerlinIconsScroll: stop requested: " + reason)
+	Log.debug("BerlinIconsScroll: stop requested: " + reason)
 
 
 func module_is_finished() -> bool:
@@ -145,7 +145,7 @@ func _load_textures() -> void:
 	_textures.clear()
 	var dir := DirAccess.open(ICONS_DIR)
 	if dir == null:
-		Logger.warn("BerlinIconsScroll: icons dir not found: " + ICONS_DIR)
+		Log.warn("BerlinIconsScroll: icons dir not found: " + ICONS_DIR)
 		return
 	dir.list_dir_begin()
 	var fname := dir.get_next()
@@ -156,7 +156,7 @@ func _load_textures() -> void:
 				_textures.append(tex)
 		fname = dir.get_next()
 	dir.list_dir_end()
-	Logger.info("BerlinIconsScroll: loaded %d textures" % _textures.size())
+	Log.info("BerlinIconsScroll: loaded %d textures" % _textures.size())
 
 
 func _spawn_icon_random() -> void:

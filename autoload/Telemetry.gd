@@ -30,4 +30,4 @@ func _on_rare_event(name: String, _payload: Dictionary) -> void:
 	if name == "UPLINK_LOST":
 		uplink_strength = 0.0
 		subsystem_ok = false
-		Logger.warn("Telemetry: uplink lost")
+		Log.warn("Telemetry: uplink lost")

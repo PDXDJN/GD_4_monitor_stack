@@ -14,7 +14,7 @@ static func apply() -> void:
 	# Hide cursor (kiosk mode)
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 
-	Logger.info("RenderProfile: applied", {
+	Log.info("RenderProfile: applied", {
 		"fps": Engine.max_fps,
 		"fullscreen": Config.get_b("fullscreen", true)
 	})

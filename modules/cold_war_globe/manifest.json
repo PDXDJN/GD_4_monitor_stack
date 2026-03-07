@@ -1,0 +1,23 @@
+{
+  "id": "cold_war_globe",
+  "title": "Cold War Globe — NORAD Command Console",
+  "scene": "res://modules/cold_war_globe/ColdWarGlobe.tscn",
+  "tags": ["globe", "radar", "terminal", "cold_war", "satellite", "slow"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 90,
+    "max_sec": 150
+  },
+  "transition": {
+    "in": "fade_black",
+    "out": "scanline_wipe",
+    "in_duration": 1.8,
+    "out_duration": 1.4
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 1.0
+}

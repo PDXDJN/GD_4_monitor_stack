@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://norad_situation_board"]
+
+[ext_resource type="Script" path="res://modules/norad_situation_board/NoradSituationBoard.gd" id="1_script"]
+
+[node name="NoradSituationBoard" type="Node2D"]
+script = ExtResource("1_script")

@@ -167,7 +167,7 @@ func map_virtual_rect_to_segments(virtual_rect: Rect2) -> Array[Dictionary]:
 
 			# Map the intersection's top-left to real screen coordinates.
 			var mapping  := virtual_to_real(inter.position.y)
-			var real_y   := mapping["real_y"] if mapping["visible"] else 0.0
+			var real_y   : float = mapping["real_y"] if mapping["visible"] else 0.0
 			var real_rect := Rect2(Vector2(inter.position.x, real_y), inter.size)
 
 			jobs.append({

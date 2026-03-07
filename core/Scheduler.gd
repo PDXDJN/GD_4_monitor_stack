@@ -41,13 +41,13 @@ func _process(delta: float) -> void:
 		_emit_big()
 
 func _emit_small() -> void:
-	var name := SMALL_EVENTS[_rng.randi() % SMALL_EVENTS.size()]
+	var name: String = SMALL_EVENTS[_rng.randi() % SMALL_EVENTS.size()]
 	var payload := {"time": App.station_time}
-	Logger.debug("Scheduler: rare small event", {"name": name})
+	Log.debug("Scheduler: rare small event", {"name": name})
 	EventBus.rare_event.emit(name, payload)
 
 func _emit_big() -> void:
-	var name := BIG_EVENTS[_rng.randi() % BIG_EVENTS.size()]
+	var name: String = BIG_EVENTS[_rng.randi() % BIG_EVENTS.size()]
 	var payload := {"time": App.station_time, "severity": "high"}
-	Logger.info("Scheduler: rare BIG event", {"name": name})
+	Log.info("Scheduler: rare BIG event", {"name": name})
 	EventBus.rare_event.emit(name, payload)

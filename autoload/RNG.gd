@@ -19,7 +19,7 @@ func init_seed() -> void:
 		"boot", "scene+boot", _:
 			# Use time at boot for randomness per-run
 			boot_seed = int(Time.get_unix_time_from_system())
-	Logger.info("RNG: boot_seed initialised", {"policy": policy, "seed": boot_seed})
+	Log.info("RNG: boot_seed initialised", {"policy": policy, "seed": boot_seed})
 
 func derive_scene_seed(scene_id: String, variant := "") -> int:
 	var raw := "%s:%d:%s" % [scene_id, boot_seed, variant]

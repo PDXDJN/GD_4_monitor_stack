@@ -26,6 +26,8 @@ var _registry: SceneRegistry = null
 var _pool: Array[Dictionary] = []      # [{id, weight}]
 var _no_repeat_window: int = 2
 var _recent_ids: Array[String] = []
+var _history: Array[String] = []        # ordered play history for prev navigation
+var _next_override_id: String = ""      # force-pick this id on next load
 
 # ─── Active module ────────────────────────────────────────────────────────────
 var _active_module: Node = null
@@ -46,7 +48,7 @@ var _virtual_space: VirtualSpace = null
 var _scheduler: Scheduler = null
 
 func _ready() -> void:
-	Logger.info("Launcher: starting")
+	Log.info("Launcher: starting")
 	_panel_layout = PanelLayout.new()
 	_virtual_space = VirtualSpace.new()
 	_hard_cap_sec = Config.get_f("global_scene_hard_cap_sec", 600.0)
@@ -59,8 +61,9 @@ func _ready() -> void:
 	# Debug overlay (optional)
 	_debug_overlay = get_node_or_null("DebugOverlay")
 
-	# Connect signals
+	# Connect debug signals
 	EventBus.debug_skip_requested.connect(_on_debug_skip)
+	EventBus.debug_skip_prev_requested.connect(_on_debug_skip_prev)
 
 	# Load registry
 	_registry = SceneRegistry.new()
@@ -93,19 +96,19 @@ func _transition_to(new_state: State) -> void:
 func _do_loading() -> void:
 	var manifest := _pick_next_module()
 	if manifest.is_empty():
-		Logger.error("Launcher: no modules available — retrying in 5s")
+		Log.error("Launcher: no modules available — retrying in 5s")
 		await get_tree().create_timer(5.0).timeout
 		_transition_to(State.LOADING)
 		return
 
 	_active_manifest = manifest
 	var scene_path: String = manifest["scene"]
-	Logger.info("Launcher: loading module", {"id": manifest["id"], "scene": scene_path})
+	Log.info("Launcher: loading module", {"id": manifest["id"], "scene": scene_path})
 
 	# Load the scene
 	var packed: PackedScene = load(scene_path)
 	if packed == null:
-		Logger.error("Launcher: failed to load scene", {"path": scene_path})
+		Log.error("Launcher: failed to load scene", {"path": scene_path})
 		_show_subsystem_offline()
 		await get_tree().create_timer(2.0).timeout
 		_transition_to(State.LOADING)
@@ -113,7 +116,7 @@ func _do_loading() -> void:
 
 	_active_module = packed.instantiate()
 	if _active_module == null:
-		Logger.error("Launcher: failed to instantiate scene", {"path": scene_path})
+		Log.error("Launcher: failed to instantiate scene", {"path": scene_path})
 		_show_subsystem_offline()
 		await get_tree().create_timer(2.0).timeout
 		_transition_to(State.LOADING)
@@ -130,7 +133,7 @@ func _do_loading() -> void:
 	}
 
 	if not _active_module.has_method("module_configure"):
-		Logger.error("Launcher: module missing module_configure", {"id": manifest["id"]})
+		Log.error("Launcher: module missing module_configure", {"id": manifest["id"]})
 		_active_module.free()
 		_active_module = null
 		_show_subsystem_offline()
@@ -149,7 +152,7 @@ func _do_loading() -> void:
 	var planned := _calc_planned_runtime(manifest, seed_val)
 	_module_start_time = App.station_time
 	_module_deadline = _module_start_time + planned
-	Logger.info("Launcher: module configured", {
+	Log.info("Launcher: module configured", {
 		"id": manifest["id"],
 		"planned_sec": planned,
 		"seed": seed_val
@@ -191,7 +194,7 @@ func _do_unloading() -> void:
 		_scene_root.remove_child(_active_module)
 		_active_module.queue_free()
 		_active_module = null
-		Logger.info("Launcher: module unloaded", {"id": _active_manifest.get("id", "?")})
+		Log.info("Launcher: module unloaded", {"id": _active_manifest.get("id", "?")})
 
 	await get_tree().process_frame
 	_transition_to(State.LOADING)
@@ -206,7 +209,7 @@ func _check_running() -> void:
 
 	# Hard cap
 	if elapsed >= _hard_cap_sec:
-		Logger.warn("Launcher: HARD_CAP exceeded", {"id": _active_manifest.get("id", "?")})
+		Log.warn("Launcher: HARD_CAP exceeded", {"id": _active_manifest.get("id", "?")})
 		_begin_stop("HARD_CAP")
 		return
 
@@ -224,7 +227,7 @@ func _check_running() -> void:
 	_advance_sequence(elapsed)
 
 func _begin_stop(reason: String) -> void:
-	Logger.info("Launcher: stopping module", {"reason": reason, "id": _active_manifest.get("id", "?")})
+	Log.info("Launcher: stopping module", {"reason": reason, "id": _active_manifest.get("id", "?")})
 	_state = State.STOPPING
 	if _active_module != null and _active_module.has_method("module_request_stop"):
 		_active_module.module_request_stop(reason)
@@ -235,7 +238,7 @@ func _check_stopping() -> void:
 		return
 
 	# If module is interruptible or finished, proceed
-	var finished := not _active_module.has_method("module_is_finished") or _active_module.module_is_finished()
+	var finished: bool = not _active_module.has_method("module_is_finished") or _active_module.module_is_finished()
 	var interruptible: bool = _active_manifest.get("interruptible", true)
 
 	if finished or interruptible:
@@ -271,13 +274,13 @@ func _execute_sequence_step(step: Dictionary) -> void:
 				if allow_early:
 					_begin_stop("sequence_emit")
 		_:
-			Logger.warn("Launcher: unknown sequence op", {"op": op})
+			Log.warn("Launcher: unknown sequence op", {"op": op})
 
 func _call_module_method(method: String, args: Array) -> void:
 	if _active_module == null or method.is_empty():
 		return
 	if not _active_module.has_method(method):
-		Logger.warn("Launcher: module missing method in sequence", {"method": method, "id": _active_manifest.get("id", "?")})
+		Log.warn("Launcher: module missing method in sequence", {"method": method, "id": _active_manifest.get("id", "?")})
 		return
 
 	# Replace the "$RANDOM" convenience token with a random integer
@@ -306,14 +309,14 @@ func _load_pool() -> void:
 	var pool_path := Config.get_s("scene_pool_path", "res://config/scene_pool.json")
 	var f := FileAccess.open(pool_path, FileAccess.READ)
 	if f == null:
-		Logger.error("Launcher: cannot open scene_pool.json", {"path": pool_path})
+		Log.error("Launcher: cannot open scene_pool.json", {"path": pool_path})
 		return
 
 	var parsed = JSON.parse_string(f.get_as_text())
 	f.close()
 
 	if parsed == null or not parsed is Dictionary:
-		Logger.error("Launcher: invalid scene_pool.json")
+		Log.error("Launcher: invalid scene_pool.json")
 		return
 
 	_no_repeat_window = int(parsed.get("no_repeat_window", Config.get_i("no_repeat_window", 2)))
@@ -324,11 +327,20 @@ func _load_pool() -> void:
 		if entry is Dictionary and entry.has("id"):
 			_pool.append({"id": str(entry["id"]), "weight": float(entry.get("weight", 1.0))})
 
-	Logger.info("Launcher: pool loaded", {"count": _pool.size(), "no_repeat": _no_repeat_window})
+	Log.info("Launcher: pool loaded", {"count": _pool.size(), "no_repeat": _no_repeat_window})
 
 func _pick_next_module() -> Dictionary:
+	# Override: go to a specific module (e.g. from debug_prev)
+	if not _next_override_id.is_empty():
+		var override_id := _next_override_id
+		_next_override_id = ""
+		var m := _registry.get_manifest(override_id)
+		if not m.is_empty():
+			return m
+		Log.warn("Launcher: override id not found in registry, falling through", {"id": override_id})
+
 	if _pool.is_empty():
-		Logger.error("Launcher: pool is empty")
+		Log.error("Launcher: pool is empty")
 		return {}
 
 	# Filter out recent ids
@@ -341,14 +353,14 @@ func _pick_next_module() -> Dictionary:
 
 	# Fallback to full pool if all excluded
 	if candidates.is_empty():
-		Logger.warn("Launcher: all modules in repeat window, using full pool")
+		Log.warn("Launcher: all modules in repeat window, using full pool")
 		for entry in _pool:
 			var manifest := _registry.get_manifest(entry["id"])
 			if not manifest.is_empty():
 				candidates.append({"weight": entry["weight"], "manifest": manifest})
 
 	if candidates.is_empty():
-		Logger.error("Launcher: no valid modules found in registry")
+		Log.error("Launcher: no valid modules found in registry")
 		return {}
 
 	# Weighted random selection
@@ -369,6 +381,9 @@ func _add_to_recent(id: String) -> void:
 	_recent_ids.append(id)
 	while _recent_ids.size() > _no_repeat_window:
 		_recent_ids.pop_front()
+	_history.append(id)
+	if _history.size() > 20:
+		_history.pop_front()
 
 func _calc_planned_runtime(manifest: Dictionary, seed_val: int) -> float:
 	var tl: Dictionary = manifest.get("timeline", {})
@@ -389,11 +404,25 @@ func _calc_planned_runtime(manifest: Dictionary, seed_val: int) -> float:
 # ─── Debug ────────────────────────────────────────────────────────────────────
 func _on_debug_skip() -> void:
 	if _state == State.RUNNING or _state == State.STOPPING:
-		Logger.info("Launcher: debug skip requested")
+		Log.info("Launcher: debug skip requested")
 		_begin_stop("debug_skip")
 
+func _on_debug_skip_prev() -> void:
+	if _state != State.RUNNING and _state != State.STOPPING:
+		return
+	# Need at least 2 entries: current + one before it
+	if _history.size() < 2:
+		Log.info("Launcher: no previous module in history")
+		return
+	# The last entry is the current module; step back to the one before it
+	_history.pop_back()
+	_next_override_id = _history.back()
+	_history.pop_back()   # will be re-added when it starts again
+	Log.info("Launcher: going back to", {"id": _next_override_id})
+	_begin_stop("debug_prev")
+
 func _show_subsystem_offline() -> void:
-	Logger.warn("Launcher: SUBSYSTEM OFFLINE")
+	Log.warn("Launcher: SUBSYSTEM OFFLINE")
 	await _transitions.play("hard_cut", 0.0, "out")
 	await get_tree().create_timer(1.5).timeout
 	await _transitions.play("hard_cut", 0.0, "in")

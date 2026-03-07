@@ -1,5 +1,4 @@
 extends Node
-class_name Logger
 
 ## Structured logger — outputs to stdout (Godot console).
 ## No dependencies on other autoloads.

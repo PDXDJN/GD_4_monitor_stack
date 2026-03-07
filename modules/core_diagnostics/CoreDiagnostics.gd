@@ -34,7 +34,7 @@ func module_configure(ctx: Dictionary) -> void:
 ## Called by Launcher sequence at timed intervals.
 func set_mode(m: String) -> void:
 	_mode = m
-	Logger.debug("CoreDiagnostics: mode", {"mode": m})
+	Log.debug("CoreDiagnostics: mode", {"mode": m})
 	queue_redraw()
 
 func module_start() -> void:
@@ -226,7 +226,7 @@ func module_request_stop(reason: String) -> void:
 	_stop_requested = true
 	_winding_down = true
 	_wind_down_timer = 0.0
-	Logger.debug("CoreDiagnostics: stop requested", {"reason": reason})
+	Log.debug("CoreDiagnostics: stop requested", {"reason": reason})
 
 func module_is_finished() -> bool:
 	return _finished

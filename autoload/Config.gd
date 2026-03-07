@@ -12,16 +12,16 @@ func load_config() -> void:
 	var path := "res://config/app_config.json"
 	var f := FileAccess.open(path, FileAccess.READ)
 	if f == null:
-		Logger.error("Config: failed to open config file", {"path": path})
+		Log.error("Config: failed to open config file", {"path": path})
 		return
 	var text := f.get_as_text()
 	f.close()
 	var parsed = JSON.parse_string(text)
 	if parsed == null or not parsed is Dictionary:
-		Logger.error("Config: failed to parse JSON", {"path": path})
+		Log.error("Config: failed to parse JSON", {"path": path})
 		return
 	_data = parsed
-	Logger.info("Config: loaded", {"keys": _data.keys()})
+	Log.info("Config: loaded", {"keys": _data.keys()})
 
 func get_i(key: String, default := 0) -> int:
 	if _data.has(key):

@@ -1,0 +1,23 @@
+{
+  "id": "norad_situation_board",
+  "title": "NORAD Situation Board",
+  "scene": "res://modules/norad_situation_board/NoradSituationBoard.tscn",
+  "tags": ["cold_war", "hud", "text", "status", "table"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 60,
+    "max_sec": 150
+  },
+  "transition": {
+    "in": "fade_black",
+    "out": "scanline_wipe",
+    "in_duration": 1.2,
+    "out_duration": 1.0
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 0.9
+}

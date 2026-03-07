@@ -19,7 +19,7 @@ func _ready() -> void:
 
 func play(name: String, duration: float, direction: String) -> void:
 	EventBus.transition_started.emit(name)
-	Logger.debug("Transitions: play", {"name": name, "dir": direction, "dur": duration})
+	Log.debug("Transitions: play", {"name": name, "dir": direction, "dur": duration})
 
 	# Ensure overlay covers the full viewport
 	var vp_size := get_viewport().get_visible_rect().size
@@ -35,7 +35,7 @@ func play(name: String, duration: float, direction: String) -> void:
 			await _hard_cut(direction)
 		_:
 			# Unknown transition — use fade as fallback
-			Logger.warn("Transitions: unknown transition, using fade_black", {"name": name})
+			Log.warn("Transitions: unknown transition, using fade_black", {"name": name})
 			await _fade_black(duration, direction)
 
 	EventBus.transition_finished.emit(name)

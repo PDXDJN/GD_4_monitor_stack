@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cold_war_globe"]
+
+[ext_resource type="Script" path="res://modules/cold_war_globe/ColdWarGlobe.gd" id="1_script"]
+
+[node name="ColdWarGlobe" type="Node2D"]
+script = ExtResource("1_script")

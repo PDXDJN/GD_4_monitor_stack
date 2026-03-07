@@ -11,7 +11,7 @@ func scan() -> void:
 	var base_dir := "res://modules"
 	var dir := DirAccess.open(base_dir)
 	if dir == null:
-		Logger.error("SceneRegistry: cannot open modules directory", {"path": base_dir})
+		Log.error("SceneRegistry: cannot open modules directory", {"path": base_dir})
 		return
 
 	dir.list_dir_begin()
@@ -22,7 +22,7 @@ func scan() -> void:
 		entry = dir.get_next()
 	dir.list_dir_end()
 
-	Logger.info("SceneRegistry: scan complete", {"count": manifests.size(), "ids": manifests.keys()})
+	Log.info("SceneRegistry: scan complete", {"count": manifests.size(), "ids": manifests.keys()})
 
 func _try_load_manifest(module_path: String) -> void:
 	var manifest_path := module_path + "/manifest.json"
@@ -31,7 +31,7 @@ func _try_load_manifest(module_path: String) -> void:
 
 	var f := FileAccess.open(manifest_path, FileAccess.READ)
 	if f == null:
-		Logger.warn("SceneRegistry: could not open manifest", {"path": manifest_path})
+		Log.warn("SceneRegistry: could not open manifest", {"path": manifest_path})
 		return
 
 	var text := f.get_as_text()
@@ -39,16 +39,16 @@ func _try_load_manifest(module_path: String) -> void:
 
 	var parsed = JSON.parse_string(text)
 	if parsed == null or not parsed is Dictionary:
-		Logger.warn("SceneRegistry: invalid JSON in manifest", {"path": manifest_path})
+		Log.warn("SceneRegistry: invalid JSON in manifest", {"path": manifest_path})
 		return
 
 	var validated := SceneManifest.validate(parsed)
 	if not SceneManifest.is_valid(validated):
-		Logger.warn("SceneRegistry: manifest failed validation", {"path": manifest_path})
+		Log.warn("SceneRegistry: manifest failed validation", {"path": manifest_path})
 		return
 
 	manifests[validated["id"]] = validated
-	Logger.debug("SceneRegistry: registered module", {"id": validated["id"]})
+	Log.debug("SceneRegistry: registered module", {"id": validated["id"]})
 
 func get_manifest(id: String) -> Dictionary:
 	return manifests.get(id, {})

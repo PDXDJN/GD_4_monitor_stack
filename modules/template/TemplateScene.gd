@@ -29,7 +29,7 @@ func module_status() -> Dictionary:
 
 func module_request_stop(reason: String) -> void:
 	_stop_requested = true
-	Logger.debug("Template: stop requested", {"reason": reason})
+	Log.debug("Template: stop requested", {"reason": reason})
 	# TODO: start graceful wind-down, then set _finished = true
 	_finished = true  # Immediate for template
 

@@ -14,8 +14,7 @@ func _draw() -> void:
 	var vp   := get_viewport().get_visible_rect().size
 	var font := ThemeDB.fallback_font
 
-	# Near-black background
-	draw_rect(Rect2(Vector2.ZERO, vp), Color(0.02, 0.0, 0.0, 1.0), true)
+	draw_rect(Rect2(Vector2.ZERO, vp), Color(0.0, 0.0, 0.0, 1.0), true)
 
 	var cx := vp.x * 0.5
 	var cy := vp.y * 0.5

@@ -135,7 +135,7 @@ func _draw() -> void:
 		_draw_thread(thread, alpha_scale)
 
 func _draw_panel_field(panel_data: Dictionary, alpha_scale: float, pw: float, ph: float) -> void:
-	var p      := panel_data["index"]
+	var p      : int = panel_data["index"]
 	var rect   := _panel_layout.get_panel_rect(p)
 	var ry     := rect.position.y
 	var pulse  := sin(_station_pulse * 1.8 + float(panel_data["pulse_offset"])) * 0.5 + 0.5
@@ -249,7 +249,7 @@ func module_request_stop(reason: String) -> void:
 	_stop_requested = true
 	_winding_down = true
 	_wind_down_timer = 0.0
-	Logger.debug("PacContainment: stop requested", {"reason": reason})
+	Log.debug("PacContainment: stop requested", {"reason": reason})
 
 func module_is_finished() -> bool:
 	return _finished
