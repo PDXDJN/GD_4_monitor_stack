@@ -5,7 +5,9 @@ extends Node
 ## Depends on: Logger, Config, RNG, EventBus, RenderProfile (loaded from core)
 
 var station_time: float = 0.0
-var _pre_fit_size := Vector2i(0, 0)  # non-zero when window is currently fit-to-screen
+var _pre_fit_size := Vector2i(0, 0)   # non-zero when window is currently fit-to-screen
+var _pre_span_size := Vector2i(0, 0)  # non-zero when spanning all physical monitors
+var _pre_span_pos  := Vector2i(0, 0)
 
 func _ready() -> void:
 	Log.info("App: starting up")
@@ -47,6 +49,8 @@ func _input(event: InputEvent) -> void:
 	match kc:
 		KEY_F:
 			_toggle_fullscreen()
+		KEY_M:
+			_toggle_monitor_span()
 		KEY_F1:
 			var overlay := get_tree().get_root().find_child("DebugOverlay", true, false)
 			if overlay:
@@ -79,6 +83,51 @@ func _fit_window_to_screen() -> void:
 	get_window().size = Vector2i(win_w, win_h)
 	if not _is_embedded():
 		get_window().position = (screen - Vector2i(win_w, win_h)) / 2
+
+
+func _toggle_monitor_span() -> void:
+	# Span the window across all physical monitors so each panel fills one screen.
+	# Requires the OS window to be in windowed (not fullscreen) mode.
+	if _is_embedded():
+		Log.warn("App: monitor span not supported in editor preview")
+		return
+	var win := get_window()
+	if _pre_span_size != Vector2i(0, 0):
+		# Restore pre-span state.
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+		win.size     = _pre_span_size
+		win.position = _pre_span_pos
+		_pre_span_size = Vector2i(0, 0)
+		get_tree().root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_KEEP
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		Log.info("App: monitor span off")
+	else:
+		# Save current state and span across all screens.
+		_pre_span_size = win.size
+		_pre_span_pos  = win.position
+		# Must be windowed to move/resize across multiple screens.
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+		var span := _get_all_screens_rect()
+		win.size     = span.size
+		win.position = span.position
+		# IGNORE letterboxing so 1024×3072 content maps 1:1 onto the combined rect.
+		get_tree().root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_IGNORE
+		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+		Log.info("App: spanning monitors", {"screens": DisplayServer.get_screen_count(), "rect": span})
+
+
+func _get_all_screens_rect() -> Rect2i:
+	var count := DisplayServer.get_screen_count()
+	if count == 0:
+		return Rect2i(Vector2i.ZERO, DisplayServer.screen_get_size())
+	var min_x := 999999;  var min_y := 999999
+	var max_x := -999999; var max_y := -999999
+	for i in count:
+		var pos := DisplayServer.screen_get_position(i)
+		var sz  := DisplayServer.screen_get_size(i)
+		min_x = mini(min_x, pos.x);        min_y = mini(min_y, pos.y)
+		max_x = maxi(max_x, pos.x + sz.x); max_y = maxi(max_y, pos.y + sz.y)
+	return Rect2i(Vector2i(min_x, min_y), Vector2i(max_x - min_x, max_y - min_y))
 
 
 func _toggle_fullscreen() -> void:
