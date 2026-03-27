@@ -4,7 +4,7 @@
   "panel_width": 1024,
   "panel_height": 768,
   "bezel_gap": 512,
-  "fullscreen": true,
+  "fullscreen": false,
   "debug_overlay": false,
   "scene_pool_path": "res://config/scene_pool.json",
   "transition_default": "fade_black",

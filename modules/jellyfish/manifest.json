@@ -1,0 +1,23 @@
+{
+  "id": "jellyfish",
+  "title": "Space Jellyfish",
+  "scene": "res://modules/jellyfish/SpaceJellyfish.tscn",
+  "tags": ["vector", "ambient", "slow", "space", "organic"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 90,
+    "max_sec": 180
+  },
+  "transition": {
+    "in": "fade_black",
+    "out": "fade_black",
+    "in_duration": 2.5,
+    "out_duration": 2.0
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 1.0
+}

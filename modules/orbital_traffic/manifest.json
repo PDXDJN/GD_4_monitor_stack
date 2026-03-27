@@ -1,0 +1,23 @@
+{
+  "id": "orbital_traffic",
+  "title": "Orbital Traffic Control",
+  "scene": "res://modules/orbital_traffic/OrbitalTraffic.tscn",
+  "tags": ["vector", "ambient", "parallax", "space", "slow"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 60,
+    "max_sec": 150
+  },
+  "transition": {
+    "in": "fade_black",
+    "out": "fade_black",
+    "in_duration": 1.5,
+    "out_duration": 1.2
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 1.0
+}

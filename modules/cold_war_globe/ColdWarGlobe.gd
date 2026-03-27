@@ -23,11 +23,11 @@ var _stop_requested := false
 var _finished       := false
 
 # ── Palette — phosphor green + cold war amber/red ───────────────────────────────
-const C_BRIGHT := Color(0.20, 1.00, 0.55, 1.00)   # bright phosphor green
-const C_MID    := Color(0.10, 0.85, 0.45, 0.80)   # mid green
-const C_DIM    := Color(0.00, 0.55, 0.22, 0.40)   # dim green
+const C_BRIGHT := Color(0.20, 1.00, 0.60, 1.00)   # bright phosphor green
+const C_MID    := Color(0.10, 0.95, 0.52, 0.92)   # mid green
+const C_DIM    := Color(0.00, 0.82, 0.38, 0.72)   # dim green
 const C_SCAN   := Color(0.00, 0.08, 0.03, 0.055)  # scanline overlay tint
-const C_BG     := Color(0.00, 0.30, 0.12, 0.12)   # background dot grid
+const C_BG     := Color(0.00, 0.65, 0.28, 0.35)   # background dot grid
 const C_AMBER  := Color(1.00, 0.72, 0.15, 0.88)   # missile arc / alert amber
 const C_RED    := Color(1.00, 0.18, 0.08, 0.95)   # hostile / warhead red
 const C_CYAN   := Color(0.30, 0.95, 1.00, 0.90)   # satellite / friendly contact
@@ -39,12 +39,82 @@ shader_type canvas_item;
 uniform vec4 tint_color : source_color = vec4(0.1, 0.85, 0.45, 1.0);
 void fragment() {
     vec4 tex = texture(TEXTURE, UV);
-    // "blackness" = how dark the pixel is (1.0 for pure black, 0.0 for white)
+	// "blackness" = how dark the pixel is (1.0 for pure black, 0.0 for white)
     float blackness = 1.0 - max(max(tex.r, tex.g), tex.b);
     // Reconstruct alpha: use the tex alpha AND the darkness so only strokes show
     COLOR = vec4(tint_color.rgb, tex.a * blackness * tint_color.a);
 }
 """
+
+# Sphere-mapping shader: inverse-orthographic-projects each screen pixel onto a
+# virtual sphere, recovers geographic (lon, lat), and samples the equirectangular
+# SVG map there — producing a true 3D rotating globe appearance.
+const GLOBE_MAP_SHADER_SRC := """
+shader_type canvas_item;
+uniform vec4  tint_color : source_color = vec4(0.1, 0.90, 0.48, 0.88);
+uniform float rot_y = 0.0;   // Y-axis rotation matching _globe_rot
+uniform float tilt  = 0.44;  // viewing tilt in radians, matching TILT constant
+void fragment() {
+    vec2  uv = UV * 2.0 - 1.0;
+    float r2 = dot(uv, uv);
+    if (r2 > 1.0) { COLOR = vec4(0.0); return; }
+    float z4    = sqrt(1.0 - r2);
+    float cos_t = cos(tilt);
+    float sin_t = sin(tilt);
+    float x3 =  uv.x;
+    float y3 =  uv.y * cos_t + z4 * sin_t;
+    float z3 = -uv.y * sin_t + z4 * cos_t;
+    float lon   = atan(z3, x3) + rot_y;
+    float lat   = asin(clamp(y3, -1.0, 1.0));
+    float tex_u = fract(lon / (2.0 * 3.14159265) + 0.5);
+    float tex_v = lat / 3.14159265 + 0.5;
+    vec4  tex      = texture(TEXTURE, vec2(tex_u, tex_v));
+    float blackness = 1.0 - max(max(tex.r, tex.g), tex.b);
+    float edge      = smoothstep(1.0, 0.88, sqrt(r2));
+    COLOR = vec4(tint_color.rgb, tex.a * blackness * tint_color.a * edge);
+}
+"""
+
+# Simplified continental coastlines [lon_deg, lat_deg].
+# Projected with the same tilted orthographic math as the wireframe grid so they
+# rotate in perfect sync with it.  Each inner array is one continuous polyline.
+const _COAST := [
+	# ── North America ──────────────────────────────────────────────────────────
+	[[-165,62],[-133,55],[-124,47],[-122,37],[-117,32],[-110,23],
+	 [-90,16],[-83,10],[-80,25],[-76,35],[-70,42],[-66,44],[-60,44],
+	 [-54,47],[-54,52],[-60,56],[-65,62],[-78,63],[-95,63],
+	 [-120,70],[-140,70],[-157,71],[-165,65],[-165,62]],
+	# ── South America ──────────────────────────────────────────────────────────
+	[[-77,8],[-62,11],[-52,4],[-35,-4],[-35,-10],[-40,-20],[-44,-23],
+	 [-49,-28],[-52,-33],[-56,-38],[-62,-45],[-65,-55],[-68,-54],
+	 [-74,-45],[-72,-35],[-72,-25],[-77,-14],[-80,-4],[-80,1],[-77,8]],
+	# ── Europe ─────────────────────────────────────────────────────────────────
+	[[-9,38],[-6,36],[3,41],[5,43],[9,44],[14,44],[14,46],[18,40],
+	 [22,37],[26,38],[28,42],[24,56],[22,60],[25,60],[30,65],[25,71],
+	 [18,71],[8,70],[5,62],[8,63],[5,57],[10,58],[14,56],[18,58],
+	 [24,56],[20,55],[15,54],[8,54],[2,51],[0,51],[-5,50],[-5,48],
+	 [-2,44],[-9,44],[-9,38]],
+	# ── Africa ─────────────────────────────────────────────────────────────────
+	[[-6,36],[11,37],[15,33],[25,30],[33,31],[36,25],[38,18],[42,12],
+	 [44,11],[51,11],[44,2],[41,-2],[40,-10],[36,-18],[31,-25],[27,-32],
+	 [20,-34],[18,-34],[14,-30],[12,-18],[9,-6],[8,4],[2,5],[-4,5],
+	 [-16,14],[-17,21],[-13,27],[-8,34],[-6,36]],
+	# ── Eurasia ────────────────────────────────────────────────────────────────
+	[[28,42],[40,32],[44,12],[50,22],[56,24],[60,22],[72,20],[73,18],
+	 [77,8],[80,14],[80,22],[84,27],[88,22],[100,8],[103,1],[105,-5],
+	 [110,-7],[115,-8],[124,-8],[132,-8],[136,-5],[141,-10],[152,-22],
+	 [148,-18],[142,-10],[134,-14],[130,-12],[130,0],[122,6],[118,18],
+	 [121,24],[120,30],[122,37],[120,40],[114,40],[110,42],[100,52],
+	 [90,52],[80,50],[70,54],[60,55],[50,62],[55,65],[60,68],[70,66],
+	 [80,68],[90,68],[100,70],[110,68],[120,65],[130,62],[142,52],
+	 [130,42],[122,37],[120,30],[118,18],[108,20],[100,14],[96,16],
+	 [92,22],[88,22],[80,26],[72,26],[68,24],[62,26],[56,24],[50,22],
+	 [48,30],[44,32],[40,32],[38,38],[36,30],[28,42]],
+	# ── Australia ──────────────────────────────────────────────────────────────
+	[[114,-22],[115,-35],[118,-38],[124,-34],[132,-32],[138,-35],
+	 [143,-38],[150,-38],[154,-28],[152,-22],[148,-20],[142,-10],
+	 [136,-12],[130,-16],[126,-14],[123,-18],[114,-22]],
+]
 
 # ── Cached layout ───────────────────────────────────────────────────────────────
 var _panel_rects : Array[Rect2] = []
@@ -62,8 +132,10 @@ const WD_DUR      := 2.5
 var _globe_tex     : Texture2D = null
 var _globe_shader  : Shader    = null
 var _globe_sprite  : Sprite2D  = null   # large rotating globe
-var _globe_rot     := 0.0
-const GLOBE_ROT_SPD := 0.07   # rad/sec
+var _map_sprite    : Sprite2D  = null   # sphere-mapped SVG earth texture
+var _map_shader    : Shader    = null
+var _globe_rot      := 0.0
+const GLOBE_ROT_SPD  := 0.07  # rad/sec
 
 var _missiles     : Array[Dictionary] = []
 var _next_missile := 0.0
@@ -169,17 +241,11 @@ func module_start() -> void:
 		_globe_shader = Shader.new()
 		_globe_shader.code = GLOBE_SHADER_SRC
 
-	# Panel 0 — large rotating globe sprite (z_index=-1 → behind _draw() overlays)
+	# Panel 0 — procedural 3D wireframe + continent overlay
 	_free_sprite(_globe_sprite)
-	_globe_rot = module_rng.randf() * TAU
-	if _globe_tex and _panel_rects.size() > 0:
-		var center0 := _panel_rects[0].get_center()
-		var gs      := minf(_pw, _ph) * 0.88
-		var tex_sz  := float(maxi(_globe_tex.get_width(), _globe_tex.get_height()))
-		_globe_sprite = _make_globe_sprite(_globe_tex, center0, gs / tex_sz,
-				Color(C_MID.r, C_MID.g, C_MID.b, 0.90))
-		_globe_sprite.rotation = _globe_rot
-		add_child(_globe_sprite)
+	_free_sprite(_map_sprite)
+	_map_sprite = null
+	_globe_rot  = module_rng.randf() * TAU
 
 	# Panel 2 — small globe sprite
 	_free_sprite(_globe_sprite2)
@@ -189,7 +255,6 @@ func module_start() -> void:
 		var tex_sz  := float(maxi(_globe_tex.get_width(), _globe_tex.get_height()))
 		_globe_sprite2 = _make_globe_sprite(_globe_tex, center2, sg / tex_sz,
 				Color(C_MID.r, C_MID.g, C_MID.b, 0.65))
-		_globe_sprite2.rotation = _globe_rot * 0.25
 		add_child(_globe_sprite2)
 
 	# Panel 0 — missiles
@@ -237,6 +302,7 @@ func _process(delta: float) -> void:
 		_wd_timer += delta
 		var a := clampf(1.0 - _wd_timer / WD_DUR, 0.0, 1.0)
 		if is_instance_valid(_globe_sprite):  _globe_sprite.modulate.a  = a
+		if is_instance_valid(_map_sprite):    _map_sprite.modulate.a    = a
 		if is_instance_valid(_globe_sprite2): _globe_sprite2.modulate.a = a
 		if _wd_timer >= WD_DUR:
 			_finished = true
@@ -245,12 +311,8 @@ func _process(delta: float) -> void:
 
 	var now := App.station_time
 
-	# Globe rotation
+	# Globe rotation — drives the procedural wireframe and continent overlay
 	_globe_rot += GLOBE_ROT_SPD * delta
-	if is_instance_valid(_globe_sprite):
-		_globe_sprite.rotation = _globe_rot
-	if is_instance_valid(_globe_sprite2):
-		_globe_sprite2.rotation = _globe_rot * 0.25
 
 	# Missiles
 	if now >= _next_missile:
@@ -306,16 +368,13 @@ func _draw_panel0_globe(a: float) -> void:
 
 	var gs := minf(_pw, _ph) * 0.88
 
-	# When SVG not loaded, draw procedural wireframe sphere
-	if not _globe_tex:
-		_draw_fallback_sphere(center, gs * 0.5, a)
+	# Procedural 3D globe — includes its own boundary circle
+	_draw_fallback_sphere(center, gs * 0.5, a)
+	# Continent outlines — same projection, same rotation, drawn on top
+	_draw_continents(center, gs * 0.5, a)
 
-	# Globe outline ring (on top of sprite via z-order)
-	draw_arc(center, gs * 0.495, 0.0, TAU, 80,
-			Color(C_DIM.r, C_DIM.g, C_DIM.b, a * 0.55), 1.2, true)
-
-	# Targeting crosshairs
-	var cr  := gs * 0.5 + 20.0
+	# Targeting crosshairs (contained within the globe boundary)
+	var cr  := gs * 0.5 - 8.0
 	var gap := 22.0
 	var xc  := Color(C_DIM.r, C_DIM.g, C_DIM.b, a * 0.45)
 	draw_line(center + Vector2(-cr, 0.0),  center + Vector2(-gap, 0.0), xc, 0.7)
@@ -365,20 +424,106 @@ func _draw_missiles(a: float) -> void:
 				Color(C_RED.r, C_RED.g, C_RED.b, a * 0.95))
 
 func _draw_fallback_sphere(center: Vector2, r: float, a: float) -> void:
-	var col := Color(C_DIM.r, C_DIM.g, C_DIM.b, a * 0.50)
-	draw_arc(center, r, 0.0, TAU, 64, col, 1.0, true)
-	for i in 7:
-		var ly := (float(i) - 3.0) / 3.0 * r
-		var lr := sqrt(maxf(0.0, r * r - ly * ly))
-		if lr > 4.0:
-			draw_arc(center + Vector2(0.0, ly), lr, 0.0, TAU, 32, col, 0.5, true)
-	for i in 10:
-		var lng := (TAU / 10.0) * i + _globe_rot
-		var pts := PackedVector2Array()
-		for j in 33:
-			var lat := (PI / 32.0) * j - PI * 0.5
-			pts.push_back(center + Vector2(cos(lat) * cos(lng), sin(lat)) * r)
-		draw_polyline(pts, col, 0.5, true)
+	# Tilted orthographic projection — tilt gives latitude lines visible curvature.
+	# TILT rotates the view ~25° above the equatorial plane (Earth-like presentation).
+	const LATS  := 8    # latitude bands
+	const LONS  := 12   # longitude lines
+	const VERTS := 60   # points per line
+	const TILT  := 0.44 # radians (~25°)
+
+	var cos_tilt := cos(TILT)
+	var sin_tilt := sin(TILT)
+
+	# Longitude lines — front half brighter, back half dimmer
+	for i in LONS:
+		var lon   := (TAU / LONS) * i
+		var pts_f := PackedVector2Array()
+		var pts_b := PackedVector2Array()
+		for j in VERTS + 1:
+			var lat := PI * float(j) / float(VERTS) - PI * 0.5
+			var x3  := cos(lat) * cos(lon - _globe_rot)
+			var y3  := sin(lat)
+			var z3  := cos(lat) * sin(lon - _globe_rot)
+			var y4  := y3 * cos_tilt - z3 * sin_tilt
+			var z4  := y3 * sin_tilt + z3 * cos_tilt
+			var pt  := center + Vector2(-x3, -y4) * r
+			if z4 >= 0.0:
+				if pts_b.size() > 1:
+					draw_polyline(pts_b, Color(C_DIM.r, C_DIM.g, C_DIM.b, a * 0.22), 0.5, true)
+				pts_b.clear()
+				pts_f.push_back(pt)
+			else:
+				if pts_f.size() > 1:
+					draw_polyline(pts_f, Color(C_DIM.r, C_DIM.g, C_DIM.b, a * 0.72), 1.0, true)
+				pts_f.clear()
+				pts_b.push_back(pt)
+		if pts_f.size() > 1:
+			draw_polyline(pts_f, Color(C_DIM.r, C_DIM.g, C_DIM.b, a * 0.72), 1.0, true)
+		if pts_b.size() > 1:
+			draw_polyline(pts_b, Color(C_DIM.r, C_DIM.g, C_DIM.b, a * 0.22), 0.5, true)
+
+	# Latitude lines — front hemisphere only (appear as natural arcs)
+	for i in LATS + 1:
+		var lat   := PI * float(i) / float(LATS) - PI * 0.5
+		var is_eq := (i == LATS / 2)
+		var pts   := PackedVector2Array()
+		for j in VERTS + 1:
+			var lon := TAU * float(j) / float(VERTS)
+			var x3  := cos(lat) * cos(lon - _globe_rot)
+			var y3  := sin(lat)
+			var z3  := cos(lat) * sin(lon - _globe_rot)
+			var y4  := y3 * cos_tilt - z3 * sin_tilt
+			var z4  := y3 * sin_tilt + z3 * cos_tilt
+			var pt  := center + Vector2(-x3, -y4) * r
+			if z4 >= 0.0:
+				pts.push_back(pt)
+			else:
+				if pts.size() > 1:
+					var lw  := 1.8 if is_eq else 0.7
+					var col := Color(C_BRIGHT.r, C_BRIGHT.g, C_BRIGHT.b, a * 0.95) if is_eq \
+							 else Color(C_DIM.r, C_DIM.g, C_DIM.b, a * 0.62)
+					draw_polyline(pts, col, lw, true)
+				pts.clear()
+		if pts.size() > 1:
+			var lw  := 1.8 if is_eq else 0.7
+			var col := Color(C_BRIGHT.r, C_BRIGHT.g, C_BRIGHT.b, a * 0.95) if is_eq \
+					 else Color(C_DIM.r, C_DIM.g, C_DIM.b, a * 0.62)
+			draw_polyline(pts, col, lw, true)
+
+	# Globe boundary circle
+	draw_arc(center, r, 0.0, TAU, 64, Color(C_MID.r, C_MID.g, C_MID.b, a * 0.82), 1.6, true)
+
+func _draw_continents(center: Vector2, r: float, a: float) -> void:
+	var cos_tilt := cos(0.44)
+	var sin_tilt := sin(0.44)
+	var col_f    := Color(C_BRIGHT.r, C_BRIGHT.g, C_BRIGHT.b, a * 0.90)
+	var col_b    := Color(C_BRIGHT.r, C_BRIGHT.g, C_BRIGHT.b, a * 0.18)
+	for coast in _COAST:
+		var pts_f := PackedVector2Array()
+		var pts_b := PackedVector2Array()
+		for pair in coast:
+			var lon := deg_to_rad(float(pair[0]))
+			var lat := deg_to_rad(float(pair[1]))
+			var x3  := cos(lat) * cos(lon - _globe_rot)
+			var y3  := sin(lat)
+			var z3  := cos(lat) * sin(lon - _globe_rot)
+			var y4  := y3 * cos_tilt - z3 * sin_tilt
+			var z4  := y3 * sin_tilt + z3 * cos_tilt
+			var pt  := center + Vector2(-x3, -y4) * r
+			if z4 >= 0.0:
+				if pts_b.size() > 1:
+					draw_polyline(pts_b, col_b, 0.6, true)
+				pts_b.clear()
+				pts_f.push_back(pt)
+			else:
+				if pts_f.size() > 1:
+					draw_polyline(pts_f, col_f, 1.4, true)
+				pts_f.clear()
+				pts_b.push_back(pt)
+		if pts_f.size() > 1:
+			draw_polyline(pts_f, col_f, 1.4, true)
+		if pts_b.size() > 1:
+			draw_polyline(pts_b, col_b, 0.6, true)
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  Panel 1 — Radar Sweep Display
@@ -653,6 +798,9 @@ func module_is_finished() -> bool:
 func module_shutdown() -> void:
 	_free_sprite(_globe_sprite)
 	_globe_sprite = null
+	_free_sprite(_map_sprite)
+	_map_sprite   = null
+	_map_shader   = null
 	_free_sprite(_globe_sprite2)
 	_globe_sprite2 = null
 	_missiles.clear()

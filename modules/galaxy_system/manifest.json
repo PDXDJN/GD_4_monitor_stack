@@ -1,0 +1,23 @@
+{
+  "id": "galaxy_system",
+  "title": "Galaxy System — Spiral Rotation",
+  "scene": "res://modules/galaxy_system/GalaxySystem.tscn",
+  "tags": ["particles", "gpu", "space", "ambient", "slow"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 120,
+    "max_sec": 300
+  },
+  "transition": {
+    "in": "fade_black",
+    "out": "fade_black",
+    "in_duration": 2.0,
+    "out_duration": 2.0
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 1.0
+}

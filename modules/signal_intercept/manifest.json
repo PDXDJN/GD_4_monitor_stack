@@ -1,0 +1,23 @@
+{
+  "id": "signal_intercept",
+  "title": "Deep Space Signal Intercept",
+  "scene": "res://modules/signal_intercept/SignalIntercept.tscn",
+  "tags": ["vector", "signal", "atmospheric", "slow", "space"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 90,
+    "max_sec": 160
+  },
+  "transition": {
+    "in": "fade_black",
+    "out": "scanline_wipe",
+    "in_duration": 2.0,
+    "out_duration": 1.5
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 1.0
+}

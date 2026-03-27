@@ -1,0 +1,23 @@
+{
+  "id": "pac_man",
+  "title": "Pac-Man Chase",
+  "scene": "res://modules/pacman/PacMan.tscn",
+  "tags": ["arcade", "retro", "chase", "vertical"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 45,
+    "max_sec": 90
+  },
+  "transition": {
+    "in": "fade_black",
+    "out": "fade_black",
+    "in_duration": 1.0,
+    "out_duration": 1.0
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 1.0
+}

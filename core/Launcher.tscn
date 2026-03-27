@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://launcher_main"]
+[gd_scene load_steps=6 format=3 uid="uid://launcher_main"]
 
 [ext_resource type="Script" path="res://core/Launcher.gd" id="1_launcher"]
 [ext_resource type="Script" path="res://core/Transitions.gd" id="2_transitions"]
 [ext_resource type="Script" path="res://core/Scheduler.gd" id="3_scheduler"]
 [ext_resource type="PackedScene" path="res://ui/DebugOverlay.tscn" id="4_debug"]
+[ext_resource type="PackedScene" path="res://ui/ControlBoard.tscn" id="5_controlboard"]
 
 [node name="Launcher" type="Node"]
 script = ExtResource("1_launcher")
@@ -20,3 +21,5 @@ script = ExtResource("2_transitions")
 script = ExtResource("3_scheduler")
 
 [node name="DebugOverlay" parent="." instance=ExtResource("4_debug")]
+
+[node name="ControlBoard" parent="." instance=ExtResource("5_controlboard")]

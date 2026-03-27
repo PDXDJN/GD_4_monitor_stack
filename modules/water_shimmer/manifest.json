@@ -1,0 +1,23 @@
+{
+  "id": "water_shimmer",
+  "title": "Water Shimmer — Caustic Light on Deep Water",
+  "scene": "res://modules/water_shimmer/WaterShimmer.tscn",
+  "tags": ["particles", "gpu", "water", "ambient", "slow", "blue"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 90,
+    "max_sec": 240
+  },
+  "transition": {
+    "in": "fade_black",
+    "out": "fade_black",
+    "in_duration": 2.5,
+    "out_duration": 2.5
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 1.1
+}

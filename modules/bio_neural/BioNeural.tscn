@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bio_neural"]
+
+[ext_resource type="Script" path="res://modules/bio_neural/BioNeural.gd" id="1_script"]
+
+[node name="BioNeural" type="Node2D"]
+script = ExtResource("1_script")

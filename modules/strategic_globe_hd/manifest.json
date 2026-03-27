@@ -1,0 +1,23 @@
+{
+  "id": "strategic_globe_hd",
+  "title": "Strategic Globe Display HD",
+  "scene": "res://modules/strategic_globe_hd/StrategicGlobeHD.tscn",
+  "tags": ["vector", "globe", "cold-war", "slow", "space"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 60,
+    "max_sec": 150
+  },
+  "transition": {
+    "in": "fade_black",
+    "out": "scanline_wipe",
+    "in_duration": 1.8,
+    "out_duration": 1.4
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 0.9
+}

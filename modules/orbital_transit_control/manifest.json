@@ -1,0 +1,23 @@
+{
+  "id": "orbital_transit_control",
+  "title": "Orbital Transit Control — Berlin Sector",
+  "scene": "res://modules/orbital_transit_control/OrbitalTransitControl.tscn",
+  "tags": ["live", "data", "transit", "berlin", "hud"],
+  "timeline": {
+    "mode": "range",
+    "min_sec": 120,
+    "max_sec": 240
+  },
+  "transition": {
+    "in": "fade_black",
+    "out": "fade_black",
+    "in_duration": 1.2,
+    "out_duration": 1.0
+  },
+  "seed": {
+    "policy": "scene+boot",
+    "variant": ""
+  },
+  "interruptible": true,
+  "weight": 1.0
+}

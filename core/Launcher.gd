@@ -20,6 +20,7 @@ var _state: State = State.IDLE
 var _scene_root: Node = null
 var _transitions: Transitions = null
 var _debug_overlay: Node = null
+var _control_board: Node = null
 
 # ─── Registry & pool ─────────────────────────────────────────────────────────
 var _registry: SceneRegistry = null
@@ -60,6 +61,7 @@ func _ready() -> void:
 
 	# Debug overlay (optional)
 	_debug_overlay = get_node_or_null("DebugOverlay")
+	_control_board = get_node_or_null("ControlBoard")
 
 	# Connect debug signals
 	EventBus.debug_skip_requested.connect(_on_debug_skip)
@@ -343,18 +345,27 @@ func _pick_next_module() -> Dictionary:
 		Log.error("Launcher: pool is empty")
 		return {}
 
+	# Respect control board — build enabled subset
+	var enabled_pool: Array[Dictionary] = []
+	for entry in _pool:
+		if _is_module_enabled(entry["id"]):
+			enabled_pool.append(entry)
+	if enabled_pool.is_empty():
+		Log.warn("Launcher: all modules disabled in control board, using full pool")
+		enabled_pool = _pool
+
 	# Filter out recent ids
 	var candidates: Array[Dictionary] = []
-	for entry in _pool:
+	for entry in enabled_pool:
 		if not (entry["id"] in _recent_ids):
 			var manifest := _registry.get_manifest(entry["id"])
 			if not manifest.is_empty():
 				candidates.append({"weight": entry["weight"], "manifest": manifest})
 
-	# Fallback to full pool if all excluded
+	# Fallback: ignore repeat window if all enabled modules were recent
 	if candidates.is_empty():
-		Log.warn("Launcher: all modules in repeat window, using full pool")
-		for entry in _pool:
+		Log.warn("Launcher: all enabled modules in repeat window, ignoring window")
+		for entry in enabled_pool:
 			var manifest := _registry.get_manifest(entry["id"])
 			if not manifest.is_empty():
 				candidates.append({"weight": entry["weight"], "manifest": manifest})
@@ -376,6 +387,11 @@ func _pick_next_module() -> Dictionary:
 			return c["manifest"]
 
 	return candidates[-1]["manifest"]
+
+func _is_module_enabled(id: String) -> bool:
+	if _control_board != null and _control_board.has_method("is_enabled"):
+		return _control_board.is_enabled(id)
+	return true
 
 func _add_to_recent(id: String) -> void:
 	_recent_ids.append(id)

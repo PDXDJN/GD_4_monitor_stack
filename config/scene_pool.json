@@ -1,12 +1,21 @@
 {
   "pool": [
-    {"id": "orbital_overview",  "weight": 1.0},
-    {"id": "data_cascade",      "weight": 1.0},
-    {"id": "pac_containment",   "weight": 1.0},
-    {"id": "core_diagnostics",  "weight": 0.6},
-    {"id": "berlin_icons",      "weight": 1.0},
-    {"id": "cold_war_globe",         "weight": 1.0},
-    {"id": "norad_situation_board", "weight": 0.9}
+	{"id": "orbital_overview",        "weight": 0.5},
+	{"id": "data_cascade",            "weight": 1.0},
+	{"id": "pac_containment",         "weight": 0.1},
+	{"id": "core_diagnostics",        "weight": 0.6},
+	{"id": "berlin_icons",            "weight": 1.0},
+	{"id": "cold_war_globe",          "weight": 1.0},
+	{"id": "norad_situation_board",   "weight": 0.9},
+	{"id": "pac_man",                 "weight": 1.0},
+	{"id": "jellyfish",               "weight": 1.0},
+	{"id": "orbital_traffic",         "weight": 1.0},
+	{"id": "strategic_globe_hd",      "weight": 0.9},
+	{"id": "bio_neural",              "weight": 1.0},
+	{"id": "orbital_transit_control", "weight": 1.0},
+	{"id": "galaxy_system",           "weight": 1.2},
+	{"id": "signal_intercept",        "weight": 1.9},
+	{"id": "water_shimmer",           "weight": 1.1}
   ],
   "no_repeat_window": 2
 }

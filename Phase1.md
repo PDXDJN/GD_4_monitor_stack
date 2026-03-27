@@ -650,3 +650,4 @@ func _process(delta: float) -> void:
 	# For each segment, draw only the intersecting slice.
 	# (Implementation depends on whether you're using TextureRect.region_rect, shaders, or custom draw.)
 ```
+

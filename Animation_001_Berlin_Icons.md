@@ -1,6 +1,4 @@
-Oh excellent. Vertical Berlin icon crawl across mismatched monitors with dead zones and wraparound?
-
-That’s not an animation. That’s a religion.
+Vertical Berlin icon crawl across mismatched monitors with dead zones and wraparound?
 
 Let’s design it properly so it:
 
