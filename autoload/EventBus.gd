@@ -9,3 +9,4 @@ extends Node
 @warning_ignore("UNUSED_SIGNAL") signal transition_finished(name: String)
 @warning_ignore("UNUSED_SIGNAL") signal debug_skip_requested()
 @warning_ignore("UNUSED_SIGNAL") signal debug_skip_prev_requested()
+@warning_ignore("UNUSED_SIGNAL") signal resolution_changed(profile_name: String, panel_w: int, panel_h: int)

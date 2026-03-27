@@ -47,3 +47,20 @@ func get_dict(key: String, default := {}) -> Dictionary:
 	if _data.has(key) and _data[key] is Dictionary:
 		return _data[key]
 	return default
+
+## Switch to a named resolution profile, merging its values into the live config.
+## Returns true on success, false if the profile name is unknown.
+func apply_profile(profile_name: String) -> bool:
+	var profiles := get_dict("resolution_profiles", {})
+	if not profiles.has(profile_name):
+		Log.warn("Config: unknown profile", {"name": profile_name})
+		return false
+	var profile: Dictionary = profiles[profile_name]
+	for key in profile:
+		_data[key] = profile[key]
+	_data["active_profile"] = profile_name
+	Log.info("Config: profile applied", {"profile": profile_name, "values": profile})
+	return true
+
+func get_active_profile() -> String:
+	return get_s("active_profile", "")

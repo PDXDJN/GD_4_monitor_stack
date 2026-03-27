@@ -66,6 +66,7 @@ func _ready() -> void:
 	# Connect debug signals
 	EventBus.debug_skip_requested.connect(_on_debug_skip)
 	EventBus.debug_skip_prev_requested.connect(_on_debug_skip_prev)
+	EventBus.resolution_changed.connect(_on_resolution_changed)
 
 	# Load registry
 	_registry = SceneRegistry.new()
@@ -436,6 +437,15 @@ func _on_debug_skip_prev() -> void:
 	_history.pop_back()   # will be re-added when it starts again
 	Log.info("Launcher: going back to", {"id": _next_override_id})
 	_begin_stop("debug_prev")
+
+func _on_resolution_changed(_profile_name: String, _pw: int, _ph: int) -> void:
+	# Rebuild layout objects from the updated Config values, then reload the module.
+	_panel_layout = PanelLayout.new()
+	_virtual_space = VirtualSpace.new()
+	Log.info("Launcher: layout rebuilt for new resolution", {"profile": _profile_name})
+	# Skip the current module so it gets reconfigured with the new dimensions.
+	if _state == State.RUNNING or _state == State.STOPPING:
+		_begin_stop("resolution_changed")
 
 func _show_subsystem_offline() -> void:
 	Log.warn("Launcher: SUBSYSTEM OFFLINE")

@@ -51,6 +51,8 @@ func _input(event: InputEvent) -> void:
 			_toggle_fullscreen()
 		KEY_M:
 			_toggle_monitor_span()
+		KEY_R:
+			_toggle_resolution()
 		KEY_F1:
 			var overlay := get_tree().get_root().find_child("DebugOverlay", true, false)
 			if overlay:
@@ -83,6 +85,25 @@ func _fit_window_to_screen() -> void:
 	get_window().size = Vector2i(win_w, win_h)
 	if not _is_embedded():
 		get_window().position = (screen - Vector2i(win_w, win_h)) / 2
+
+
+func _toggle_resolution() -> void:
+	# Cycle through available resolution profiles and update the viewport + layout.
+	var profiles_dict := Config.get_dict("resolution_profiles", {})
+	var profile_names := profiles_dict.keys()
+	if profile_names.size() < 2:
+		Log.warn("App: only one resolution profile defined, nothing to toggle")
+		return
+	var current := Config.get_active_profile()
+	var idx := profile_names.find(current)
+	var next_name: String = profile_names[(idx + 1) % profile_names.size()]
+	if Config.apply_profile(next_name):
+		var pw := Config.get_i("panel_width")
+		var ph := Config.get_i("panel_height")
+		var pc := Config.get_i("panel_count", 4)
+		get_tree().root.content_scale_size = Vector2i(pw, ph * pc)
+		EventBus.resolution_changed.emit(next_name, pw, ph)
+		Log.info("App: resolution toggled", {"profile": next_name, "viewport": Vector2i(pw, ph * pc)})
 
 
 func _toggle_monitor_span() -> void:

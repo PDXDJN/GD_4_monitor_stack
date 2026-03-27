@@ -1,8 +1,19 @@
 {
+  "active_profile": "1920x1080",
+  "resolution_profiles": {
+    "1920x1080": {
+      "panel_width": 1920,
+      "panel_height": 1080
+    },
+    "1024x768": {
+      "panel_width": 1024,
+      "panel_height": 768
+    }
+  },
   "target_fps": 30,
   "panel_count": 4,
-  "panel_width": 1024,
-  "panel_height": 768,
+  "panel_width": 1920,
+  "panel_height": 1080,
   "bezel_gap": 512,
   "fullscreen": false,
   "debug_overlay": false,
